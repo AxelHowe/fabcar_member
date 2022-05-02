@@ -57,7 +57,6 @@ func init() {
 	fmt.Println("DB OK")
 	// 上面是登入SQL
 
-
 	// result := Login("root", "root")
 	// fmt.Println(result)
 
@@ -156,10 +155,10 @@ func GeneratePassHash(password string, salt string) (hash string, err error) {
 	return fmt.Sprintf("%x", h), nil
 }
 
-func Query_user_report(username string) {
+func Query_user_report(username string) []string {
 	sql := `select * from report where username = ?`
 	rows, err := db.Query(sql, username)
-
+	result := make([]string, 0)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -173,7 +172,9 @@ func Query_user_report(username string) {
 		}
 
 		fmt.Println(report.report_key)
+		result = append(result, report.report_key)
 	}
+	return result
 }
 
 func Register(username, password, role string) error {
@@ -184,7 +185,7 @@ func Register(username, password, role string) error {
 	}
 
 	// TODO: role 腳色
-	if len(role) == 0 || (role != "member" && role != "admin") {
+	if len(role) == 0 || (role != "order" && role != "supplier") {
 		fmt.Println("error: role is error")
 		// return false
 		return errors.New("error: role is error")
@@ -255,7 +256,36 @@ func Register(username, password, role string) error {
 }
 
 func Generate_report(username, report_key string) error {
-
-
+	sql := `INSERT INTO report(report_ket,username) values(?, ?);`
+	_, err := db.Query(sql, report_key, username)
+	if err != nil {
+		fmt.Println("error: query error")
+		fmt.Println(err)
+		// return false
+		return errors.New("error: query error")
+	}
 	return nil
+}
+
+// TODO: return err
+func CheckUserRole(username string) string {
+	sql := `select role from user where username = ?`
+	rows, err := db.Query(sql, username)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// var report Report
+	var user User
+	for rows.Next() {
+		err = rows.Scan(&user.role)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Println(&user.role)
+	}
+	return user.role
 }
