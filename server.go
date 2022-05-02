@@ -50,14 +50,14 @@ func main() {
 	{
 		authorized.GET("/reports", getAllReports)
 		authorized.POST("/reports", createReport)
-		authorized.POST("/reports/changSigner",changeSigner)
+		authorized.POST("/reports/changeSigner", changeSigner)
 		authorized.POST("/reports/changeNote")
-		authorized.POST("/reports/changSdate")
-		authorized.POST("/reports/changSbad")
-		authorized.POST("/reports/changOcargo")
-		authorized.POST("/reports/changCcargo")
-		authorized.POST("/reports/changInvoice")
-		authorized.POST("/reports/changCbill")
+		authorized.POST("/reports/changeSdate")
+		authorized.POST("/reports/changeSbad", changeSbad)
+		authorized.POST("/reports/changeOcargo")
+		authorized.POST("/reports/changeCcargo")
+		authorized.POST("/reports/changeInvoice")
+		authorized.POST("/reports/changeCbill")
 		authorized.POST("/reports/Finish")
 
 	}
@@ -268,21 +268,34 @@ type HistoryItem struct {
 	Report Report
 }
 type Receive struct {
-	Status string `json:"status"`
-	Report Report `json:"report"`
+	Status bool `json:"status"`
+	Report Report `json:"report",json:"reports"`
+	Message string `json:"message"`
 }
 
 func getAllReports(c *gin.Context) {
 
-	r, err := GET("reports")
+	r, err := GET("reports/")
 	if err != nil {
+		// TODO: http 回傳500
 		log.Println(err.Error())
 		// TODO c.json statuserror
+		// c.JSON(http.StatusBadRequest, r.Report)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": "false",
+			"error":  err.Error(),
+		})
+		return
 	}
 	// var rep = Receive{Status: "200 OK"}
 	// fmt.Println(rep)
+
+	fmt.Println("====")
+	fmt.Println(r.Report)
+	fmt.Println("====")
 	c.JSON(http.StatusOK, gin.H{
 		"status": r.Status,
+		"report": r.Report,
 		// "msg": "you are doing get_reports",
 	})
 	return
@@ -309,11 +322,13 @@ func GET(path string) (Receive, error) {
 		return rep, err
 	}
 	// fmt.Println(r)
-	// fmt.Println("====")
-	// fmt.Println(string(bodyBytes))
-	// fmt.Println("====")
+	fmt.Println("====GET===")
+	fmt.Println(string(bodyBytes))
+	fmt.Println("====")
 
 	json.Unmarshal(bodyBytes, &rep)
+	fmt.Println("====rep")
+	fmt.Println(rep)
 	// fmt.Println(r.Status)
 	return rep, nil
 }
@@ -339,7 +354,10 @@ func POST(path string, report Report) (Receive, error) {
 		log.Println(err.Error())
 		return rep, err
 	}
-
+	fmt.Println("====bodyBytes")
+	fmt.Println(string(bodyBytes))
+	fmt.Println("====rep")
+	fmt.Println(rep)
 	json.Unmarshal(bodyBytes, &rep)
 	return rep, nil
 }
@@ -390,7 +408,7 @@ func createReport(c *gin.Context) {
 		})
 		return
 	}
-
+	// TODO: 產生訂單要移到上面判斷，還要多加判斷此訂單編號是否已存在
 	err = member.Generate_report(req.Username, req.Report.Key)
 	if err != nil {
 		log.Println(err)
@@ -423,7 +441,7 @@ func queryUserReport(c *gin.Context) {
 	}
 	report_keys := member.Query_user_report(req.Username)
 
-	for _,i := range report_keys {
+	for _, i := range report_keys {
 		r, err := GET("reports/" + i)
 		if err != nil {
 			log.Println(err.Error())
@@ -435,9 +453,138 @@ func queryUserReport(c *gin.Context) {
 	// var rep = Receive{Status: "200 OK"}
 	// fmt.Println(rep)
 	c.JSON(http.StatusOK, gin.H{
-		"status": r.Status,
+		"status": "123",
 		// "msg": "you are doing get_reports",
 	})
 	return
 }
 
+func changeSigner(c *gin.Context) {
+
+	var req struct {
+		Username string `json:"username"`
+		Report   Report `json:"report"`
+		// Password string
+	}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// TODO: 確認這個USER是此訂單的人
+	if member.CheckUserRole(req.Username) != permission.changeSigner {
+		// fmt.Println("check===")
+		// fmt.Println(req.Username)
+		// fmt.Println(member.CheckUserRole(req.Username))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "no permission",
+		})
+		return
+	}
+	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
+
+
+	//TODO: 列出所有需要的欄位
+	// TODO:好像也可以給app.js判斷
+	if req.Report.Urgent == "" || req.Report.Odate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "missing body.",
+		})
+		return
+	}
+
+	// params := Report{Process:}
+	r, err := POST("reports/changeSigner", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	fmt.Println(r)
+}
+
+func changeSbad(c *gin.Context) {
+
+	var req struct {
+		Username string `json:"username"`
+		Report   Report `json:"report"`
+		// Password string
+	}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	// TODO: 確認這個USER是此訂單的人
+	if member.CheckUserRole(req.Username) != permission.changeSbad {
+		fmt.Println("checkUserRole===")
+		fmt.Println(req.Username)
+		fmt.Println(member.CheckUserRole(req.Username))
+		fmt.Println(permission.changeSbad)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "no permission",
+		})
+		return
+	}
+	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
+
+
+	//TODO: 列出所有需要的欄位
+	// TODO:好像也可以給app.js判斷
+	if req.Report.Urgent == "" || req.Report.Odate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "missing body.",
+		})
+		return
+	}
+
+	// params := Report{Process:}
+	r, err := POST("reports/changeSbad", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	fmt.Println(r)
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": r.Status,
+		"message": r.Message,
+		// "msg": "you are doing get_reports",
+	})
+	return
+}
+
+type Permission struct {
+	createReport  string
+	changeSigner  string
+	changeSdate   string
+	changeSbad    string
+	changeOcargo  string
+	changeCcargo  string
+	changeInvoice string
+	changeCbill   string
+	Finish        string
+}
+
+var permission = Permission{
+	createReport:  "order",
+	changeSigner:  "supplier",
+	changeSdate:   "supplier",
+	changeSbad:    "order",
+	changeOcargo:  "supplier",
+	changeCcargo:  "order",
+	changeInvoice: "supplier",
+	changeCbill:   "order",
+	Finish:        "order",
+}
