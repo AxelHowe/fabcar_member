@@ -256,7 +256,7 @@ func Register(username, password, role string) error {
 }
 
 func Generate_report(username, report_key string) error {
-	sql := `INSERT INTO report(report_ket,username) values(?, ?);`
+	sql := `INSERT INTO report(report_key,username) values(?, ?);`
 	_, err := db.Query(sql, report_key, username)
 	if err != nil {
 		fmt.Println("error: query error")
