@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fabcar_member/member"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +14,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,6 +32,15 @@ func main() {
 
 	// fmt.Println(member.Generate_report("1", "2"))
 	router := gin.Default()
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:8080"}
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT"}
+	corsConfig.AllowHeaders = []string{"Authorization", "Origin", "content-type"}
+	corsConfig.AllowCredentials = true
+	corsConfig.ExposeHeaders = []string{"Content-Length"}
+	corsConfig.MaxAge = 12 * time.Hour
+	router.Use(cors.New(corsConfig))
+	router.Use(CORSMiddleware)
 
 	router.POST("/register", register)
 	router.POST("/login", login)
@@ -35,9 +48,9 @@ func main() {
 	authorized := router.Group("/")
 	authorized.Use(AuthRequired)
 	{
-		authorized.GET("/reports",getReports)
-		authorized.POST("/reports")
-		authorized.POST("/reports/changSigner")
+		authorized.GET("/reports", getAllReports)
+		authorized.POST("/reports", createReport)
+		authorized.POST("/reports/changSigner",changeSigner)
 		authorized.POST("/reports/changeNote")
 		authorized.POST("/reports/changSdate")
 		authorized.POST("/reports/changSbad")
@@ -48,7 +61,23 @@ func main() {
 		authorized.POST("/reports/Finish")
 
 	}
-	router.Run(":8080")
+	router.Run(":8888")
+}
+
+func CORSMiddleware(c *gin.Context) {
+
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+	if c.Request.Method == "OPTIONS" {
+		c.AbortWithStatus(204)
+		return
+	}
+
+	c.Next()
+
 }
 
 func register(c *gin.Context) {
@@ -146,12 +175,14 @@ func login(c *gin.Context) {
 
 	// incorrect account or password
 	// c.JSON(http.StatusUnauthorized, gin.H{
-	// 	"message": "Unauthorized",
+	//     "message": "Unauthorized",
 	// })
 }
 
 // validate JWT
 func AuthRequired(c *gin.Context) {
+	c.Next() // test 用
+	return
 	auth := c.GetHeader("Authorization")
 	token := strings.Split(auth, "Bearer ")[1]
 
@@ -203,9 +234,210 @@ func AuthRequired(c *gin.Context) {
 	}
 }
 
-func getReports(c *gin.Context) {
+type Report struct {
+	Key          string `json:"key"`
+	Process      string `json:"process"`
+	Urgent       string `json:"urgent"`
+	Odate        string `json:"odate"`
+	Ddate        string `json:"ddate"`
+	Purchase     string `json:"purchase"`
+	Sname        string `json:"sname"`
+	Supplier     string `json:"supplier"`
+	Signer       string `json:"signer"`
+	Invoice      string `json:"invoice"`
+	Pname        string `json:"pname"`
+	Pquantity    string `json:"pquantity"`
+	Price        string `json:"price"`
+	Sdate        string `json:"sdate"`
+	Amount       string `json:"amount"`
+	Sbad         string `json:"sbad"`
+	Volume       string `json:"volume"`
+	Ntraded      string `json:"ntraded"`
+	Oestablished string `json:"oestablished"`
+	Ocargo       string `json:"ocargo"`
+	Ccargo       string `json:"ccargo"`
+	Bill         string `json:"bill"`
+	Cbill        string `json:"cbill"`
+	Finish       string `json:"finish"`
+	Note         string `json:"note"`
+	Historys     []HistoryItem
+}
+
+type HistoryItem struct {
+	TxId   string
+	Report Report
+}
+type Receive struct {
+	Status string `json:"status"`
+	Report Report `json:"report"`
+}
+
+func getAllReports(c *gin.Context) {
+
+	r, err := GET("reports")
+	if err != nil {
+		log.Println(err.Error())
+		// TODO c.json statuserror
+	}
+	// var rep = Receive{Status: "200 OK"}
+	// fmt.Println(rep)
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "you are doing get_reports",
+		"status": r.Status,
+		// "msg": "you are doing get_reports",
 	})
 	return
 }
+
+//TODO return (res,err)
+func GET(path string) (Receive, error) {
+	domain := "http://localhost:9901/"
+	url := domain + path
+	r, err := http.Get(url)
+	var rep Receive
+	if err != nil {
+		// log.Fatal(err)
+		log.Println(err.Error())
+		return rep, err
+	}
+	defer r.Body.Close()
+	// return *r
+	// _, err :=io.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		// log.Fatal(err)
+		log.Println(err.Error())
+		return rep, err
+	}
+	// fmt.Println(r)
+	// fmt.Println("====")
+	// fmt.Println(string(bodyBytes))
+	// fmt.Println("====")
+
+	json.Unmarshal(bodyBytes, &rep)
+	// fmt.Println(r.Status)
+	return rep, nil
+}
+
+func POST(path string, report Report) (Receive, error) {
+	domain := "http://localhost:9901/"
+	url := domain + path
+
+	j, _ := json.Marshal(report)
+	jsonBytes := bytes.NewBuffer(j)
+	var rep Receive
+	r, err := http.Post(url, "application/json", jsonBytes)
+	if err != nil {
+		// log.Fatal(err)
+		log.Println(err.Error())
+		return rep, err
+	}
+	defer r.Body.Close()
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		// log.Fatal(err)
+		log.Println(err.Error())
+		return rep, err
+	}
+
+	json.Unmarshal(bodyBytes, &rep)
+	return rep, nil
+}
+
+func createReport(c *gin.Context) {
+	fmt.Println("===start===")
+
+	var req struct {
+		Username string `json:"username"`
+		Report   Report `json:"report"`
+		// Password string
+	}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	fmt.Println("===")
+	fmt.Println(req.Report)
+
+	if member.CheckUserRole(req.Username) != "order" {
+		fmt.Println("check===")
+		fmt.Println(req.Username)
+		fmt.Println(member.CheckUserRole(req.Username))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "no permission",
+		})
+		return
+	}
+	//TODO: 列出所有需要的欄位
+	// TODO:好像也可以給app.js判斷
+	if req.Report.Urgent == "" || req.Report.Odate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "missing body.",
+		})
+		return
+	}
+
+	// params := Report{Process:}
+	r, err := POST("reports", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	err = member.Generate_report(req.Username, req.Report.Key)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status": r.Status,
+		"msg":    "create report success.",
+	})
+	return
+}
+
+func queryUserReport(c *gin.Context) {
+
+	var req struct {
+		Username string `json:"username"`
+		Report   Report `json:"report"`
+		// Password string
+	}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	report_keys := member.Query_user_report(req.Username)
+
+	for _,i := range report_keys {
+		r, err := GET("reports/" + i)
+		if err != nil {
+			log.Println(err.Error())
+			// TODO c.json statuserror
+		}
+		fmt.Println(r)
+	}
+	// TODO:還沒處理好
+	// var rep = Receive{Status: "200 OK"}
+	// fmt.Println(rep)
+	c.JSON(http.StatusOK, gin.H{
+		"status": r.Status,
+		// "msg": "you are doing get_reports",
+	})
+	return
+}
+
