@@ -48,8 +48,9 @@ func main() {
 	authorized := router.Group("/")
 	authorized.Use(AuthRequired)
 	{
-		authorized.GET("/reports", getAllReports)
-		authorized.POST("/reports", createReport)
+		// authorized.GET("/reports", getAllReports)
+		authorized.POST("/reports", queryUserReport)
+		authorized.POST("/createReports", createReport)
 		authorized.POST("/reports/changeSigner", changeSigner)
 		authorized.POST("/reports/changeNote")
 		authorized.POST("/reports/changeSdate")
@@ -169,7 +170,8 @@ func login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": token,
+		"status": true,
+		"token":  token,
 	})
 	return
 
@@ -268,8 +270,9 @@ type HistoryItem struct {
 	Report Report
 }
 type Receive struct {
-	Status bool `json:"status"`
-	Report Report `json:"report",json:"reports"`
+	Status  bool   `json:"status"`
+	Key     string `json:"key"`
+	Report  Report `json:"report",json:"reports"`
 	Message string `json:"message"`
 }
 
@@ -435,25 +438,34 @@ func queryUserReport(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
 	report_keys := member.Query_user_report(req.Username)
-
+	reports := make([]Report, 0)
 	for _, i := range report_keys {
 		r, err := GET("reports/" + i)
 		if err != nil {
 			log.Println(err.Error())
 			// TODO c.json statuserror
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  false,
+				"message": err.Error(),
+			})
 		}
-		fmt.Println(r)
+		// fmt.Println(i)
+		// fmt.Println(r)
+		r.Report.Key = i
+		reports = append(reports, r.Report)
 	}
 	// TODO:還沒處理好
-	// var rep = Receive{Status: "200 OK"}
-	// fmt.Println(rep)
+
+	// fmt.Println(reports)
 	c.JSON(http.StatusOK, gin.H{
-		"status": "123",
+		"status": true,
+		"report": reports,
 		// "msg": "you are doing get_reports",
 	})
 	return
@@ -485,7 +497,6 @@ func changeSigner(c *gin.Context) {
 		return
 	}
 	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
-
 
 	//TODO: 列出所有需要的欄位
 	// TODO:好像也可以給app.js判斷
@@ -536,7 +547,6 @@ func changeSbad(c *gin.Context) {
 	}
 	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
 
-
 	//TODO: 列出所有需要的欄位
 	// TODO:好像也可以給app.js判斷
 	if req.Report.Urgent == "" || req.Report.Odate == "" {
@@ -558,7 +568,7 @@ func changeSbad(c *gin.Context) {
 	fmt.Println(r)
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": r.Status,
+		"status":  r.Status,
 		"message": r.Message,
 		// "msg": "you are doing get_reports",
 	})
