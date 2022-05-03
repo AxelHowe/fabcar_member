@@ -52,14 +52,14 @@ func main() {
 		authorized.POST("/reports", queryUserReport)
 		authorized.POST("/createReports", createReport)
 		authorized.POST("/reports/changeSigner", changeSigner)
-		authorized.POST("/reports/changeNote")
-		authorized.POST("/reports/changeSdate")
+		// authorized.POST("/reports/changeNote",changeNote)
+		authorized.POST("/reports/changeSdate",changeSdate)
 		authorized.POST("/reports/changeSbad", changeSbad)
-		authorized.POST("/reports/changeOcargo")
-		authorized.POST("/reports/changeCcargo")
-		authorized.POST("/reports/changeInvoice")
-		authorized.POST("/reports/changeCbill")
-		authorized.POST("/reports/Finish")
+		authorized.POST("/reports/changeOcargo",changeOcargo)
+		authorized.POST("/reports/changeCcargo",changeCcargo)
+		authorized.POST("/reports/changeInvoice",changeInvoice)
+		authorized.POST("/reports/changeCbill",changeCbill)
+		authorized.POST("/reports/Finish",Finish)
 
 	}
 	router.Run(":8888")
@@ -524,59 +524,281 @@ func changeSigner(c *gin.Context) {
 
 func changeSbad(c *gin.Context) {
 
-	var req struct {
-		Username string `json:"username"`
-		Report   Report `json:"report"`
-		// Password string
-	}
+	var req Request
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
 			"error": err.Error(),
 		})
 		return
 	}
-	// TODO: 確認這個USER是此訂單的人 (這好像應該寫在fabcar.go)
+
 	if member.CheckUserRole(req.Username) != permission.changeSbad {
-		fmt.Println("checkUserRole===")
-		fmt.Println(req.Username)
-		fmt.Println(member.CheckUserRole(req.Username))
-		fmt.Println(permission.changeSbad)
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
 			"msg": "no permission",
 		})
 		return
 	}
-	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
 
-	//TODO: 列出所有需要的欄位
-	// TODO:好像也可以給app.js判斷
-	if req.Report.Urgent == "" || req.Report.Odate == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "missing body.",
-		})
-		return
-	}
-
-	// params := Report{Process:}
 	r, err := POST("reports/changeSbad", req.Report)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
 			"error": err,
 		})
 		return
 	}
-	fmt.Println(r)
 
 	c.JSON(http.StatusOK, gin.H{
-		"status":  r.Status,
+		"status":  true,
 		"message": r.Message,
-		// "msg": "you are doing get_reports",
 	})
 	return
 }
+
+func changeSdate(c *gin.Context) {
+
+	var req Request
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if member.CheckUserRole(req.Username) != permission.changeSdate {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg": "no permission",
+		})
+		return
+	}
+
+	r, err := POST("reports/changeSdate", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
+}
+
+func changeOcargo(c *gin.Context) {
+
+	var req Request
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if member.CheckUserRole(req.Username) != permission.changeOcargo {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg": "no permission",
+		})
+		return
+	}
+
+	r, err := POST("reports/changeOcargo", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
+}
+
+func changeCcargo(c *gin.Context) {
+
+	var req Request
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if member.CheckUserRole(req.Username) != permission.changeCcargo {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg": "no permission",
+		})
+		return
+	}
+
+	r, err := POST("reports/changeCcargo", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
+}
+
+func changeInvoice(c *gin.Context) {
+
+	var req Request
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if member.CheckUserRole(req.Username) != permission.changeInvoice {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg": "no permission",
+		})
+		return
+	}
+
+	r, err := POST("reports/changeInvoice", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
+}
+
+func changeCbill(c *gin.Context) {
+
+	var req Request
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if member.CheckUserRole(req.Username) != permission.changeCbill {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg": "no permission",
+		})
+		return
+	}
+
+	r, err := POST("reports/changeCbill", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
+}
+func Finish(c *gin.Context) {
+
+	var req Request
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if member.CheckUserRole(req.Username) != permission.Finish {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"msg": "no permission",
+		})
+		return
+	}
+
+	r, err := POST("reports/Finish", req.Report)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
+}
+// {
+	// TODO: 確認這個USER是此訂單的人 (這好像應該寫在fabcar.go)
+	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
+
+	//TODO: 列出所有需要的欄位
+	// TODO:好像也可以給app.js判斷
+	// if req.Report.Urgent == "" || req.Report.Odate == "" {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"msg": "missing body.",
+	// 	})
+	// 	return
+	// }
+// }
 
 type Permission struct {
 	createReport  string
@@ -600,4 +822,9 @@ var permission = Permission{
 	changeInvoice: "supplier",
 	changeCbill:   "order",
 	Finish:        "order",
+}
+
+type Request struct {
+	Username string `json:"username"`
+	Report   Report `json:"report"`
 }
