@@ -169,9 +169,11 @@ func login(c *gin.Context) {
 		return
 	}
 
+	role := member.CheckUserRole(body.Username)
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
 		"token":  token,
+		"role":   role,
 	})
 	return
 
@@ -446,6 +448,7 @@ func queryUserReport(c *gin.Context) {
 	report_keys := member.Query_user_report(req.Username)
 	reports := make([]Report, 0)
 	for _, i := range report_keys {
+		fmt.Println("key:" + i)
 		r, err := GET("reports/" + i)
 		if err != nil {
 			log.Println(err.Error())
@@ -534,7 +537,7 @@ func changeSbad(c *gin.Context) {
 		})
 		return
 	}
-	// TODO: 確認這個USER是此訂單的人
+	// TODO: 確認這個USER是此訂單的人 (這好像應該寫在fabcar.go)
 	if member.CheckUserRole(req.Username) != permission.changeSbad {
 		fmt.Println("checkUserRole===")
 		fmt.Println(req.Username)
