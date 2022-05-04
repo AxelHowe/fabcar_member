@@ -53,13 +53,13 @@ func main() {
 		authorized.POST("/createReports", createReport)
 		authorized.POST("/reports/changeSigner", changeSigner)
 		// authorized.POST("/reports/changeNote",changeNote)
-		authorized.POST("/reports/changeSdate",changeSdate)
+		authorized.POST("/reports/changeSdate", changeSdate)
 		authorized.POST("/reports/changeSbad", changeSbad)
-		authorized.POST("/reports/changeOcargo",changeOcargo)
-		authorized.POST("/reports/changeCcargo",changeCcargo)
-		authorized.POST("/reports/changeInvoice",changeInvoice)
-		authorized.POST("/reports/changeCbill",changeCbill)
-		authorized.POST("/reports/Finish",Finish)
+		authorized.POST("/reports/changeOcargo", changeOcargo)
+		authorized.POST("/reports/changeCcargo", changeCcargo)
+		authorized.POST("/reports/changeInvoice", changeInvoice)
+		authorized.POST("/reports/changeCbill", changeCbill)
+		authorized.POST("/reports/Finish", Finish)
 
 	}
 	router.Run(":8888")
@@ -272,9 +272,10 @@ type HistoryItem struct {
 	Report Report
 }
 type Receive struct {
-	Status  bool   `json:"status"`
-	Key     string `json:"key"`
-	Report  Report `json:"report",json:"reports"`
+	Status bool   `json:"status"`
+	Key    string `json:"key"`
+	Report Report `json:"report"`
+	// Reports Report `json:"reports"`
 	Message string `json:"message"`
 }
 
@@ -327,13 +328,13 @@ func GET(path string) (Receive, error) {
 		return rep, err
 	}
 	// fmt.Println(r)
-	fmt.Println("====GET===")
-	fmt.Println(string(bodyBytes))
-	fmt.Println("====")
+	// fmt.Println("====GET===")
+	// fmt.Println(string(bodyBytes))
+	// fmt.Println("====")
 
 	json.Unmarshal(bodyBytes, &rep)
-	fmt.Println("====rep")
-	fmt.Println(rep)
+	// fmt.Println("====rep")
+	// fmt.Println(rep)
 	// fmt.Println(r.Status)
 	return rep, nil
 }
@@ -445,31 +446,39 @@ func queryUserReport(c *gin.Context) {
 		})
 		return
 	}
+
 	report_keys := member.Query_user_report(req.Username)
 	reports := make([]Report, 0)
 	for _, i := range report_keys {
-		fmt.Println("key:" + i)
+		// fmt.Println("key:" + i)
 		r, err := GET("reports/" + i)
 		if err != nil {
 			log.Println(err.Error())
-			// TODO c.json statuserror
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status":  false,
 				"message": err.Error(),
 			})
+			return
 		}
-		// fmt.Println(i)
-		// fmt.Println(r)
 		r.Report.Key = i
 		reports = append(reports, r.Report)
 	}
-	// TODO:還沒處理好
 
-	// fmt.Println(reports)
+	// 本來是用 for 迴圈 針對一筆筆訂單編號去請求資料
+	// 看要不要改成直接用 queryAllReports 去處理
+	// r, err := GET("reports/")
+	// if err != nil {
+	// 	log.Println(err.Error())
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"status":  false,
+	// 		"message": err.Error(),
+	// 	})
+	// 	return
+	// }
+
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
 		"report": reports,
-		// "msg": "you are doing get_reports",
 	})
 	return
 }
@@ -519,7 +528,12 @@ func changeSigner(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Println(r)
+	// fmt.Println(r)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": r.Message,
+	})
+	return
 }
 
 func changeSbad(c *gin.Context) {
@@ -530,7 +544,7 @@ func changeSbad(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -538,7 +552,7 @@ func changeSbad(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.changeSbad {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -548,7 +562,7 @@ func changeSbad(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -568,7 +582,7 @@ func changeSdate(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -576,7 +590,7 @@ func changeSdate(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.changeSdate {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -586,7 +600,7 @@ func changeSdate(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -606,7 +620,7 @@ func changeOcargo(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -614,7 +628,7 @@ func changeOcargo(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.changeOcargo {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -624,7 +638,7 @@ func changeOcargo(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -644,7 +658,7 @@ func changeCcargo(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -652,7 +666,7 @@ func changeCcargo(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.changeCcargo {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -662,7 +676,7 @@ func changeCcargo(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -682,7 +696,7 @@ func changeInvoice(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -690,7 +704,7 @@ func changeInvoice(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.changeInvoice {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -700,7 +714,7 @@ func changeInvoice(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -720,7 +734,7 @@ func changeCbill(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -728,7 +742,7 @@ func changeCbill(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.changeCbill {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -738,7 +752,7 @@ func changeCbill(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -757,7 +771,7 @@ func Finish(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err.Error(),
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -765,7 +779,7 @@ func Finish(c *gin.Context) {
 	if member.CheckUserRole(req.Username) != permission.Finish {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"msg": "no permission",
+			"msg":    "no permission",
 		})
 		return
 	}
@@ -775,7 +789,7 @@ func Finish(c *gin.Context) {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
-			"error": err,
+			"error":  err,
 		})
 		return
 	}
@@ -786,18 +800,20 @@ func Finish(c *gin.Context) {
 	})
 	return
 }
-// {
-	// TODO: 確認這個USER是此訂單的人 (這好像應該寫在fabcar.go)
-	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
 
-	//TODO: 列出所有需要的欄位
-	// TODO:好像也可以給app.js判斷
-	// if req.Report.Urgent == "" || req.Report.Odate == "" {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"msg": "missing body.",
-	// 	})
-	// 	return
-	// }
+// {
+//關於訂單流程的TODO
+// TODO: 確認這個USER是此訂單的人 (這好像應該寫在fabcar.go)
+// TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
+
+// TODO: 列出所有需要的欄位
+// TODO:好像也可以給app.js判斷
+// if req.Report.Urgent == "" || req.Report.Odate == "" {
+// 	c.JSON(http.StatusBadRequest, gin.H{
+// 		"msg": "missing body.",
+// 	})
+// 	return
+// }
 // }
 
 type Permission struct {
