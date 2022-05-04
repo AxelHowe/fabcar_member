@@ -158,7 +158,7 @@ func Query_user_report(username string) []string {
 			fmt.Println(err)
 		}
 
-		fmt.Println(report.report_key)
+		// fmt.Println(report.report_key)
 		result = append(result, report.report_key)
 	}
 	return result
