@@ -277,6 +277,11 @@ type Receive struct {
 	Report Report `json:"report"`
 	// Reports Report `json:"reports"`
 	Message string `json:"message"`
+	Error   receive_error `json:"error"`
+}
+
+type receive_error struct {
+	Message string `json:"message"`
 }
 
 func getAllReports(c *gin.Context) {
@@ -342,9 +347,10 @@ func GET(path string) (Receive, error) {
 func POST(path string, report Report) (Receive, error) {
 	domain := "http://localhost:9901/"
 	url := domain + path
-
+	fmt.Println(report) // 參數
 	j, _ := json.Marshal(report)
 	jsonBytes := bytes.NewBuffer(j)
+	fmt.Println(jsonBytes) // 參數
 	var rep Receive
 	r, err := http.Post(url, "application/json", jsonBytes)
 	if err != nil {
@@ -360,72 +366,68 @@ func POST(path string, report Report) (Receive, error) {
 		log.Println(err.Error())
 		return rep, err
 	}
+	
+	json.Unmarshal(bodyBytes, &rep)
 	fmt.Println("====bodyBytes")
 	fmt.Println(string(bodyBytes))
 	fmt.Println("====rep")
 	fmt.Println(rep)
-	json.Unmarshal(bodyBytes, &rep)
 	return rep, nil
 }
 
 func createReport(c *gin.Context) {
-	fmt.Println("===start===")
 
-	var req struct {
-		Username string `json:"username"`
-		Report   Report `json:"report"`
-		// Password string
-	}
+	var req Request
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
-	fmt.Println("===")
-	fmt.Println(req.Report)
-
-	if member.CheckUserRole(req.Username) != "order" {
-		fmt.Println("check===")
-		fmt.Println(req.Username)
-		fmt.Println(member.CheckUserRole(req.Username))
+	if member.CheckUserRole(req.Username) != permission.createReport {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "no permission",
-		})
-		return
-	}
-	//TODO: 列出所有需要的欄位
-	// TODO:好像也可以給app.js判斷
-	if req.Report.Urgent == "" || req.Report.Odate == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "missing body.",
+			"status":  false,
+			"message": "no permission",
 		})
 		return
 	}
 
-	// params := Report{Process:}
 	r, err := POST("reports", req.Report)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"status":  false,
+			"message": err,
 		})
 		return
 	}
+
+	if r.Status == false {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
+
 	// TODO: 產生訂單要移到上面判斷，還要多加判斷此訂單編號是否已存在
 	err = member.Generate_report(req.Username, req.Report.Key)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"status": false,
+			"error":  err,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"status": r.Status,
-		"msg":    "create report success.",
+		"status":  r.Status,
+		"message": "create report success.",
 	})
 	return
 }
@@ -485,50 +487,36 @@ func queryUserReport(c *gin.Context) {
 
 func changeSigner(c *gin.Context) {
 
-	var req struct {
-		Username string `json:"username"`
-		Report   Report `json:"report"`
-		// Password string
-	}
+	var req Request
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
-	// TODO: 確認這個USER是此訂單的人
+
 	if member.CheckUserRole(req.Username) != permission.changeSigner {
-		// fmt.Println("check===")
-		// fmt.Println(req.Username)
-		// fmt.Println(member.CheckUserRole(req.Username))
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "no permission",
-		})
-		return
-	}
-	//TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
-
-	//TODO: 列出所有需要的欄位
-	// TODO:好像也可以給app.js判斷
-	if req.Report.Urgent == "" || req.Report.Odate == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "missing body.",
+			"status": false,
+			"msg":    "no permission",
 		})
 		return
 	}
 
-	// params := Report{Process:}
 	r, err := POST("reports/changeSigner", req.Report)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
+			"status": false,
+			"error":  err,
 		})
 		return
 	}
-	// fmt.Println(r)
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -550,6 +538,7 @@ func changeSbad(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.changeSbad {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
@@ -588,6 +577,7 @@ func changeSdate(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.changeSdate {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
@@ -626,6 +616,7 @@ func changeOcargo(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.changeOcargo {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
@@ -664,6 +655,7 @@ func changeCcargo(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.changeCcargo {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
@@ -702,6 +694,7 @@ func changeInvoice(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.changeInvoice {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
@@ -740,6 +733,7 @@ func changeCbill(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.changeCbill {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
@@ -777,6 +771,7 @@ func Finish(c *gin.Context) {
 	}
 
 	if member.CheckUserRole(req.Username) != permission.Finish {
+		log.Println("no permission")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"msg":    "no permission",
