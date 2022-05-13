@@ -276,7 +276,7 @@ type Receive struct {
 	Key    string `json:"key"`
 	Report Report `json:"report"`
 	// Reports Report `json:"reports"`
-	Message string `json:"message"`
+	Message string        `json:"message"`
 	Error   receive_error `json:"error"`
 }
 
@@ -366,7 +366,7 @@ func POST(path string, report Report) (Receive, error) {
 		log.Println(err.Error())
 		return rep, err
 	}
-	
+
 	json.Unmarshal(bodyBytes, &rep)
 	fmt.Println("====bodyBytes")
 	fmt.Println(string(bodyBytes))
@@ -406,7 +406,7 @@ func createReport(c *gin.Context) {
 		return
 	}
 
-	if r.Status == false {
+	if !r.Status {
 		log.Println(r.Error)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  false,
@@ -516,7 +516,14 @@ func changeSigner(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -555,7 +562,14 @@ func changeSbad(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -594,7 +608,14 @@ func changeSdate(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -633,7 +654,14 @@ func changeOcargo(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -672,7 +700,14 @@ func changeCcargo(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -711,7 +746,14 @@ func changeInvoice(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -750,7 +792,14 @@ func changeCbill(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
@@ -788,7 +837,14 @@ func Finish(c *gin.Context) {
 		})
 		return
 	}
-
+	if !r.Status {
+		log.Println(r.Error)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  false,
+			"message": r.Error,
+		})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": r.Message,
