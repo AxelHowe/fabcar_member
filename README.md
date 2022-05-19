@@ -25,3 +25,30 @@ SECRET_KEY=
 ```
 ## 4. start 
 - `$go run .`
+
+---
+
+# 備份 couchDB
+- couchDB 預設為 5984 port
+- 請替換下列指令參數
+  - username：couchDB 帳號
+  - password：couchDB 密碼
+  - database：指定的 database
+- 切換目錄
+	```shell
+	cd backup
+	```
+## 從 database 匯出資料
+```shell
+curl --user <username>:<password> -X GET http://127.0.0.1:5984/<database>/_all_docs?include_docs=true > db.json
+```
+## 匯入資料至指定的 database
+
+匯出的 db.json 需先轉換
+```shell
+node transformdocs.js
+```
+匯入至 database
+```shell
+curl --user <username>:<password> -d @db_u.json -H "Content-Type: application/json" -X POST http://127.0.0.1:5984/<database>/_bulk_docs
+```
