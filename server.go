@@ -256,30 +256,32 @@ func AuthRequired(c *gin.Context) {
 
 type Report struct {
 	Key          string `json:"key"`
-	Process      string `json:"process"`
-	Urgent       string `json:"urgent"`
-	Odate        string `json:"odate"`
-	Ddate        string `json:"ddate"`
-	Purchase     string `json:"purchase"`
-	Sname        string `json:"sname"`
-	Supplier     string `json:"supplier"`
-	Signer       string `json:"signer"`
-	Invoice      string `json:"invoice"`
-	Pname        string `json:"pname"`
-	Pquantity    string `json:"pquantity"`
-	Price        string `json:"price"`
-	Sdate        string `json:"sdate"`
-	Amount       string `json:"amount"`
-	Sbad         string `json:"sbad"`
-	Volume       string `json:"volume"`
-	Ntraded      string `json:"ntraded"`
-	Oestablished string `json:"oestablished"`
-	Ocargo       string `json:"ocargo"`
-	Ccargo       string `json:"ccargo"`
-	Bill         string `json:"bill"`
-	Cbill        string `json:"cbill"`
-	Finish       string `json:"finish"`
-	Note         string `json:"note"`
+	Process      string `json:"process"`      //流程狀態
+	Urgent       string `json:"urgent"`       //交貨急迫性
+	Odate        string `json:"odate"`        // 訂單日期
+	Ddate        string `json:"ddate"`        //預交日期
+	Purchase     string `json:"purchase"`     //採購人員
+	Sname        string `json:"sname"`        //供應商代號
+	Supplier     string `json:"supplier"`     //供應商名稱
+	Signer       string `json:"signer"`       //供應商簽署人員
+	Invoice      string `json:"invoice"`      //發票號碼
+	Pname        string `json:"pname"`        //採購品名
+	Pquantity    string `json:"pquantity"`    //採購數量
+	Price        string `json:"price"`        //採購單價
+	Sdate        string `json:"sdate"`        //交貨日期
+	Amount       string `json:"amount"`       //交貨數量
+	Bad          string `json:"bad"`          //不良品數量
+	Bnote        string `json:"bnote"`        //不良品備註
+	Sbad         string `json:"sbad"`         //不良品總量
+	Volume       string `json:"volume"`       //已交貨總量
+	Ntraded      string `json:"ntraded"`      //未交貨總量
+	Oestablished string `json:"oestablished"` //訂單接受
+	Ocargo       string `json:"ocargo"`       //交貨完成
+	Ccargo       string `json:"ccargo"`       //確認交貨完成
+	Bill         string `json:"bill"`         //發票開立
+	Cbill        string `json:"cbill"`        //確認發票開立
+	Finish       string `json:"finish"`       //訂單完成
+	Note         string `json:"note"`         //備註
 	Historys     []HistoryItem
 }
 
