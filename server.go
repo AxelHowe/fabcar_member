@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fabcar_member/member"
 	"fmt"
+
+	// "fmt"
 	"io"
 	"log"
 	"net/http"
@@ -30,7 +32,6 @@ var jwtSecret = []byte(os.Getenv("SECRET_KEY"))
 
 func main() {
 
-	// fmt.Println(member.Generate_report("1", "2"))
 	router := gin.Default()
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"http://localhost:8080"}
@@ -88,15 +89,11 @@ func register(c *gin.Context) {
 		Role     string `json:"role"`
 	}
 	err := c.ShouldBindJSON(&body)
-	fmt.Println("===")
-	fmt.Println(body.Username)
-	fmt.Println(body.Password)
-	fmt.Println(body.Role)
-	fmt.Println("===")
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -104,11 +101,13 @@ func register(c *gin.Context) {
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
 		"message": "register success",
 	})
 	return
@@ -125,7 +124,8 @@ func login(c *gin.Context) {
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -135,7 +135,9 @@ func login(c *gin.Context) {
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"message": "Unauthorized",
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -151,11 +153,11 @@ func login(c *gin.Context) {
 		// Role:    role,
 		StandardClaims: jwt.StandardClaims{
 			Audience:  body.Username,
-			ExpiresAt: now.Add(20 * time.Second).Unix(),
+			ExpiresAt: now.Add(10 * time.Minute).Unix(), // 10 分鐘後過期
 			Id:        jwtId,
 			IssuedAt:  now.Unix(),
 			Issuer:    "ginJWT",
-			NotBefore: now.Add(10 * time.Second).Unix(),
+			// NotBefore: now.Add(10 * time.Second).Unix(),
 			Subject:   body.Username,
 		},
 	}
@@ -164,7 +166,8 @@ func login(c *gin.Context) {
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"status": false,
+			"error":  err.Error(),
 		})
 		return
 	}
@@ -188,8 +191,19 @@ func AuthRequired(c *gin.Context) {
 	c.Next() // test 用
 	return
 	auth := c.GetHeader("Authorization")
-	token := strings.Split(auth, "Bearer ")[1]
-
+	// fmt.Println("Authorization:" + auth)
+	var authSplit []string = strings.Split(auth, "Bearer ")
+	if len(authSplit) != 2 {
+		log.Println("message: can not handle this token")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status":  false,
+			"message": "can not handle this token",
+		})
+		c.Abort()
+		return
+	}
+	var token string = authSplit[1]
+	fmt.Println("token:" + token)
 	// parse and validate token for six things:
 	// validationErrorMalformed => token is malformed
 	// validationErrorUnverifiable => token could not be verified because of signing problems
@@ -219,16 +233,18 @@ func AuthRequired(c *gin.Context) {
 				message = "can not handle this token"
 			}
 		}
+		log.Println("error: " + message)
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": message,
+			"status": false,
+			"error":  message,
 		})
 		c.Abort()
 		return
 	}
 
 	if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
-		fmt.Println("username:", claims.Username)
-		fmt.Println("password:", claims.Password)
+		// fmt.Println("username:", claims.Username)
+		// fmt.Println("password:", claims.Password)
 		c.Set("username", claims.Username)
 		c.Set("password", claims.Password)
 		c.Next()
@@ -301,9 +317,9 @@ func getAllReports(c *gin.Context) {
 	// var rep = Receive{Status: "200 OK"}
 	// fmt.Println(rep)
 
-	fmt.Println("====")
-	fmt.Println(r.Report)
-	fmt.Println("====")
+	// fmt.Println("====")
+	// fmt.Println(r.Report)
+	// fmt.Println("====")
 	c.JSON(http.StatusOK, gin.H{
 		"status": r.Status,
 		"report": r.Report,
@@ -347,10 +363,10 @@ func GET(path string) (Receive, error) {
 func POST(path string, report Report) (Receive, error) {
 	domain := "http://localhost:9901/"
 	url := domain + path
-	fmt.Println(report) // 參數
+	// fmt.Println(report) // 參數
 	j, _ := json.Marshal(report)
 	jsonBytes := bytes.NewBuffer(j)
-	fmt.Println(jsonBytes) // 參數
+	// fmt.Println(jsonBytes) // 參數
 	var rep Receive
 	r, err := http.Post(url, "application/json", jsonBytes)
 	if err != nil {
@@ -368,10 +384,10 @@ func POST(path string, report Report) (Receive, error) {
 	}
 
 	json.Unmarshal(bodyBytes, &rep)
-	fmt.Println("====bodyBytes")
-	fmt.Println(string(bodyBytes))
-	fmt.Println("====rep")
-	fmt.Println(rep)
+	// fmt.Println("====bodyBytes")
+	// fmt.Println(string(bodyBytes))
+	// fmt.Println("====rep")
+	// fmt.Println(rep)
 	return rep, nil
 }
 
