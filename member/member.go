@@ -143,8 +143,10 @@ func GeneratePassHash(password string, salt string) (hash string, err error) {
 }
 
 func Query_user_report(username string) []string {
-	sql := `select * from report where username = ?`
-	rows, err := db.Query(sql, username)
+	// sql := `select * from report where username = ?`
+	sql := `select * from report`
+	// rows, err := db.Query(sql, username)
+	rows, err := db.Query(sql)
 	result := make([]string, 0)
 	if err != nil {
 		fmt.Println(err)

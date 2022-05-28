@@ -49,7 +49,7 @@ func main() {
 	authorized := router.Group("/")
 	authorized.Use(AuthRequired)
 	{
-		// authorized.GET("/reports", getAllReports)
+		// authorized.POST("/reports", getAllReports)
 		authorized.POST("/reports", queryUserReport)
 		authorized.POST("/createReports", createReport)
 		authorized.POST("/reports/changeSigner", changeSigner)
@@ -293,6 +293,7 @@ type Receive struct {
 	Status bool   `json:"status"`
 	Key    string `json:"key"`
 	Report Report `json:"report"`
+	Reports []Record `json:"reports"`
 	// Reports Report `json:"reports"`
 	Message string        `json:"message"`
 	Error   receive_error `json:"error"`
@@ -324,12 +325,23 @@ func getAllReports(c *gin.Context) {
 	// fmt.Println("====")
 	c.JSON(http.StatusOK, gin.H{
 		"status": r.Status,
-		"report": r.Report,
+		"report": r.Reports,
 		// "msg": "you are doing get_reports",
 	})
 	return
 }
 
+
+// TODO: 請回傳reports修好，把Rece刪掉
+type Record struct {
+	Key    string `json:"key"`
+	Record Report `json:"Record"`
+
+}
+// type Rece struct {
+// 	Status bool   `json:"status"`
+// 	Reports []Record `json:"reports"`
+// }
 //TODO return (res,err)
 func GET(path string) (Receive, error) {
 	domain := "http://localhost:9901/"
