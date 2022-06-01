@@ -34,7 +34,7 @@ func main() {
 
 	router := gin.Default()
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:8080"}
+	corsConfig.AllowOrigins = []string{"*"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT"}
 	corsConfig.AllowHeaders = []string{"Authorization", "Origin", "content-type"}
 	corsConfig.AllowCredentials = true
