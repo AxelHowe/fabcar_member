@@ -313,10 +313,7 @@ func getAllReports(c *gin.Context) {
 
 	r, err := GET("reports/")
 	if err != nil {
-		// TODO: http 回傳500
 		log.Println(err.Error())
-		// TODO c.json statuserror
-		// c.JSON(http.StatusBadRequest, r.Report)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": "false",
 			"error":  err.Error(),
@@ -887,20 +884,6 @@ func Finish(c *gin.Context) {
 	return
 }
 
-// {
-//關於訂單流程的TODO
-// TODO: 確認這個USER是此訂單的人 (這好像應該寫在fabcar.go)
-// TODO 搜尋訂單的process 確認流程狀態 (這好像應該寫在fabcar.go)
-
-// TODO: 列出所有需要的欄位
-// TODO:好像也可以給app.js判斷
-// if req.Report.Urgent == "" || req.Report.Odate == "" {
-// 	c.JSON(http.StatusBadRequest, gin.H{
-// 		"msg": "missing body.",
-// 	})
-// 	return
-// }
-// }
 
 type Permission struct {
 	createReport  string
