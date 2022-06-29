@@ -135,9 +135,9 @@ func login(c *gin.Context) {
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"status": false,
+			"status":  false,
 			"message": "Unauthorized",
-			"error":  err.Error(),
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -158,7 +158,7 @@ func login(c *gin.Context) {
 			IssuedAt:  now.Unix(),
 			Issuer:    "ginJWT",
 			// NotBefore: now.Add(10 * time.Second).Unix(),
-			Subject:   body.Username,
+			Subject: body.Username,
 		},
 	}
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -264,24 +264,30 @@ type Report struct {
 	Sname        string `json:"sname"`        //供應商代號
 	Supplier     string `json:"supplier"`     //供應商名稱
 	Signer       string `json:"signer"`       //供應商簽署人員
-	Invoice      string `json:"invoice"`      //發票號碼
 	Pname        string `json:"pname"`        //採購品名
 	Pquantity    string `json:"pquantity"`    //採購數量
 	Price        string `json:"price"`        //採購單價
+	Note         string `json:"note"`         //備註
 	Sdate        string `json:"sdate"`        //交貨日期
 	Amount       string `json:"amount"`       //交貨數量
+	Snote        string `json:"snote"`        //交貨備註
+	Bdate        string `json:"bdate"`        //驗貨日期
+	C_amount     string `json:"c_amount"`     //驗貨數量
 	Bad          string `json:"bad"`          //不良品數量
 	Bnote        string `json:"bnote"`        //不良品備註
-	Sbad         string `json:"sbad"`         //不良品總量
-	Volume       string `json:"volume"`       //已交貨總量
-	Ntraded      string `json:"ntraded"`      //未交貨總量
+	Idate        string `json:"idate"`        //發票日期
+	Invoice      string `json:"invoice"`      //發票號碼
+	Inote        string `json:"inote"`        //發票備註
+	Volume       string `json:"volume"`       //已交貨總量-自動計算數量
+	Cvolume      string `json:"cvolume"`      //已驗貨總量-自動計算數量
+	Sbad         string `json:"sbad"`         //不良品總量-自動計算數量
+	Ntraded      string `json:"ntraded"`      //未交貨總量-自動計算數量
 	Oestablished string `json:"oestablished"` //訂單接受
 	Ocargo       string `json:"ocargo"`       //交貨完成
-	Ccargo       string `json:"ccargo"`       //確認交貨完成
+	Ccargo       string `json:"ccargo"`       //驗貨完成
 	Bill         string `json:"bill"`         //發票開立
 	Cbill        string `json:"cbill"`        //確認發票開立
 	Finish       string `json:"finish"`       //訂單完成
-	Note         string `json:"note"`         //備註
 	Historys     []HistoryItem
 }
 
@@ -290,9 +296,9 @@ type HistoryItem struct {
 	Report Report
 }
 type Receive struct {
-	Status bool   `json:"status"`
-	Key    string `json:"key"`
-	Report Report `json:"report"`
+	Status  bool     `json:"status"`
+	Key     string   `json:"key"`
+	Report  Report   `json:"report"`
 	Reports []Record `json:"reports"`
 	// Reports Report `json:"reports"`
 	Message string        `json:"message"`
@@ -331,13 +337,12 @@ func getAllReports(c *gin.Context) {
 	return
 }
 
-
 // TODO: 請回傳reports修好，把Rece刪掉
 type Record struct {
 	Key    string `json:"key"`
 	Record Report `json:"Record"`
-
 }
+
 // type Rece struct {
 // 	Status bool   `json:"status"`
 // 	Reports []Record `json:"reports"`
