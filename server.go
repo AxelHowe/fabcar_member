@@ -135,9 +135,9 @@ func login(c *gin.Context) {
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"status": false,
+			"status":  false,
 			"message": "Unauthorized",
-			"error":  err.Error(),
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -158,7 +158,7 @@ func login(c *gin.Context) {
 			IssuedAt:  now.Unix(),
 			Issuer:    "ginJWT",
 			// NotBefore: now.Add(10 * time.Second).Unix(),
-			Subject:   body.Username,
+			Subject: body.Username,
 		},
 	}
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -290,9 +290,9 @@ type HistoryItem struct {
 	Report Report
 }
 type Receive struct {
-	Status bool   `json:"status"`
-	Key    string `json:"key"`
-	Report Report `json:"report"`
+	Status  bool     `json:"status"`
+	Key     string   `json:"key"`
+	Report  Report   `json:"report"`
 	Reports []Record `json:"reports"`
 	// Reports Report `json:"reports"`
 	Message string        `json:"message"`
@@ -331,13 +331,12 @@ func getAllReports(c *gin.Context) {
 	return
 }
 
-
 // TODO: 請回傳reports修好，把Rece刪掉
 type Record struct {
 	Key    string `json:"key"`
 	Record Report `json:"Record"`
-
 }
+
 // type Rece struct {
 // 	Status bool   `json:"status"`
 // 	Reports []Record `json:"reports"`
@@ -492,8 +491,10 @@ func queryUserReport(c *gin.Context) {
 			})
 			return
 		}
-		r.Report.Key = i
-		reports = append(reports, r.Report)
+		if r.Status == true {
+			r.Report.Key = i
+			reports = append(reports, r.Report)
+		}
 	}
 
 	// 本來是用 for 迴圈 針對一筆筆訂單編號去請求資料
